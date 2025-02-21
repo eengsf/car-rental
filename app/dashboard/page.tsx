@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged, User } from "firebase/auth";
 import { UserData } from "@/models/UserData";
-import { auth } from "@/lib/firebase/config";
-import { getUserData } from "@/lib/userController";
 import Dashboard from "@/components/dasboard/Dashboard";
 import { monitorAuthState } from "@/lib/authController";
 
@@ -13,17 +10,19 @@ const Page = () => {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
 
-  const handleUserFound = (userData: UserData) => {
-    setUser(userData);
-  };
-  const handleUserNotFound = () => {
+  const handleUserNotFound = useCallback(() => {
     setUser(null);
     router.push("/register");
-  };
+  }, [router]); 
+  
+  const handleUserFound = useCallback((userData: UserData) => {
+    setUser(userData);
+  }, []);
+  
   useEffect(() => {
     const unsubscribe = monitorAuthState(handleUserFound, handleUserNotFound);
     return () => unsubscribe();
-  }, []);
+  }, [handleUserFound, handleUserNotFound]); 
 
   if (!user) {
     return (
