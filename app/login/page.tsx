@@ -1,11 +1,13 @@
 'use client';
 
-import {  loginWithEmail, loginWithGoogle } from '@/lib/firebase/auth';
+import { loginWithEmail, loginWithGoogle } from '@/lib/firebase/auth';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {  useState } from 'react';
+import React, { useState } from 'react';
 import { FaApple } from 'react-icons/fa';
+import { IoMdEye } from 'react-icons/io';
+import { IoMdEyeOff } from 'react-icons/io';
 
 function Page() {
   const [form, setForm] = useState({
@@ -13,50 +15,55 @@ function Page() {
     password: '',
   });
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (form.email === '' || form.password === '') {
+      alert('Please fill all the fields');
+      return;
+    }
     setLoading(true);
     try {
       await loginWithEmail(form.email, form.password);
       router.push('/dashboard');
     } catch (error) {
       console.error('Login failed:', error);
-    } finally {
+      alert(error);
+    }
+    finally {
       setLoading(false);
     }
   };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
-    try {
-      const user = await loginWithGoogle();
-      if (user) {
-        console.log("Login berhasil:", user);
-        alert("Login berhasil");
-       
-      }
+    try{
+      await loginWithGoogle();
       router.push('/dashboard');
     } catch (error) {
-      console.error('Google login failed:', error);
+      console.error('Login failed:', error);
+      alert(error);
     } finally {
       setLoading(false);
     }
   };
-  
+
+  const handleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <div className="w-screen h-screen flex justify-center items-center bg-gradient-to-br from-custom-thin via-custom-medium to-custom-strong">
-      <div className="w-full sm:max-w-96 sm:h-fit h-full flex flex-col gap-5 bg-custom-light sm:borde border-none sm:rounded-xl rounded-none sm:p-7 p-5 mx-auto shadow-md shadow-black">
+      <div className="w-full sm:max-w-96 sm:h-fit h-full flex flex-col gap-5 bg-custom-light sm:border border-none sm:rounded-xl rounded-none sm:p-7 p-5 mx-auto shadow-md shadow-black">
         <div className="flex flex-col items-center gap-5">
           <Image src="/logo.svg" alt="logo" width={50} height={50} />
           <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-custom-main1">
+            <h2 className="text-2xl font-bold text-custom-semiStrong">
               Welcome back
             </h2>
-            <p className="text-xs text-custom-main2">
-              Please enter your details to login
-            </p>
+            <p className="text-xs">Please enter your details to login</p>
           </div>
         </div>
 
@@ -71,6 +78,7 @@ function Page() {
                 type="email"
                 placeholder="Enter your email"
                 autoComplete="off"
+                required
                 value={form.email}
                 disabled={loading}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -81,16 +89,34 @@ function Page() {
               <label htmlFor="password" className="font-semibold text-sm">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                autoComplete="off"
-                value={form.password}
-                disabled={loading}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="text-xs p-3 border border-custom-thin rounded-lg focus:outline-none focus:border-custom-medium"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={`${showPassword ? 'text' : 'password'}`}
+                  placeholder="Enter your password"
+                  autoComplete="off"
+                  required
+                  value={form.password}
+                  disabled={loading}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
+                  className="w-full text-xs p-3 border border-custom-thin rounded-lg focus:outline-none focus:border-custom-medium"
+                />
+                <span onClick={handleShowPassword} className="cursor-pointer">
+                  {showPassword ? (
+                    <IoMdEye
+                      size={20}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-custom-medium"
+                    />
+                  ) : (
+                    <IoMdEyeOff
+                      size={20}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-custom-medium"
+                    />
+                  )}
+                </span>
+              </div>
               <div className="flex justify-between">
                 <div className="flex items-center gap-1">
                   <input
@@ -138,11 +164,11 @@ function Page() {
           </button>
         </div>
 
-        <p className="text-xs text-custom-medium text-center">
+        <p className="text-xs text-center">
           Don&apos;t have an account?{' '}
           <Link
             href={'/register'}
-            className="text-custom-strong hover:underline cursor-pointer"
+            className="text-custom-medium hover:underline cursor-pointer"
           >
             Register
           </Link>
